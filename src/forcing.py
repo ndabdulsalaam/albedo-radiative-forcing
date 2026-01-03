@@ -30,6 +30,17 @@ class ForcingResult:
     radiative_forcing_w_m2: float
 
 
+def validate_delta_albedo(delta_albedo: float) -> float:
+    """
+    Ensure Δα is within physically plausible bounds [-1, 1].
+
+    Values outside this range imply negative or >100% reflectance and are rejected.
+    """
+    if not -1.0 <= delta_albedo <= 1.0:
+        raise ValueError("delta_albedo must be between -1 and 1.")
+    return delta_albedo
+
+
 def delta_radiative_forcing(
     delta_albedo: float,
     *,
@@ -67,6 +78,7 @@ def delta_radiative_forcing(
     """
     if not 0.0 <= area_fraction <= 1.0:
         raise ValueError("area_fraction must be between 0 and 1.")
+    validate_delta_albedo(delta_albedo)
 
     absorbed_solar_change = -solar_constant * geometric_factor * delta_albedo
     radiative_forcing = absorbed_solar_change * area_fraction
@@ -120,6 +132,7 @@ __all__ = [
     "SOLAR_CONSTANT_W_M2",
     "GEOMETRIC_FACTOR",
     "ForcingResult",
+    "validate_delta_albedo",
     "delta_radiative_forcing",
     "albedo_difference",
 ]
