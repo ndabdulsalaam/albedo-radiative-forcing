@@ -1,2 +1,6 @@
-pandas>=2.3,<3.0
-numpy>=1.26
+# Core dependencies for albedo-radiative-forcing
+# Install with: pip install -r requirements.txt
+# For development dependencies, use: pip install -e ".[dev]"
+
+pandas>=2.0.0,<3.0
+numpy>=1.24.0,<2.0
