@@ -8,14 +8,16 @@ Tests surface albedo parameterization including:
 - Perturbation calculations
 """
 
+import dataclasses
+
 import pytest
+
 from src.albedo import (
-    SurfaceAlbedo,
     SURFACE_LIBRARY,
-    validate_albedo,
-    list_surface_types,
     base_albedo,
+    list_surface_types,
     perturbed_albedo,
+    validate_albedo,
 )
 
 
@@ -25,7 +27,7 @@ class TestSurfaceAlbedo:
     def test_surface_albedo_immutable(self) -> None:
         """Test that SurfaceAlbedo is frozen (immutable)"""
         surf = SURFACE_LIBRARY["vegetation"]
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(dataclasses.FrozenInstanceError):
             surf.typical = 0.5  # type: ignore
 
 
@@ -46,8 +48,9 @@ class TestSurfaceLibrary:
     def test_surface_ranges_ordered(self) -> None:
         """Test that min <= typical <= max for all surfaces"""
         for name, surf in SURFACE_LIBRARY.items():
-            assert surf.range_min <= surf.typical <= surf.range_max, \
-                f"{name} has incorrect ordering: {surf.range_min} <= {surf.typical} <= {surf.range_max}"
+            assert (
+                surf.range_min <= surf.typical <= surf.range_max
+            ), f"{name} has incorrect ordering: {surf.range_min} <= {surf.typical} <= {surf.range_max}"
 
     def test_known_surface_values(self) -> None:
         """Test specific literature-based values"""
@@ -85,7 +88,7 @@ class TestListSurfaceTypes:
     def test_returns_iterable(self) -> None:
         """Test that function returns an iterable"""
         result = list_surface_types()
-        assert hasattr(result, '__iter__')
+        assert hasattr(result, "__iter__")
 
     def test_contains_expected_surfaces(self) -> None:
         """Test that common surfaces are in the list"""
@@ -169,7 +172,7 @@ class TestPerturbedAlbedo:
         typical = perturbed_albedo("vegetation", delta=0.02, anchor="typical")
         min_val = perturbed_albedo("vegetation", delta=0.02, anchor="min")
         max_val = perturbed_albedo("vegetation", delta=0.02, anchor="max")
-        
+
         # Should all differ by approximately the same delta from their respective bases
         assert typical != min_val != max_val
         assert min_val < typical < max_val
@@ -179,5 +182,4 @@ class TestPerturbedAlbedo:
         for surface in list_surface_types():
             for delta in [-0.5, -0.1, 0.0, 0.1, 0.5]:
                 result = perturbed_albedo(surface, delta)
-                assert 0.0 <= result <= 1.0, \
-                    f"Result {result} out of bounds for {surface} with delta={delta}"
+                assert 0.0 <= result <= 1.0, f"Result {result} out of bounds for {surface} with delta={delta}"

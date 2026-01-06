@@ -10,9 +10,8 @@ and f_area scales a regional perturbation to the global mean.
 """
 
 from dataclasses import dataclass
-from typing import Tuple
 
-from . import forcing, albedo
+from . import albedo, forcing
 
 
 @dataclass
@@ -53,7 +52,7 @@ def albedo_pipeline(
     *,
     anchor: albedo.Anchor = "typical",
     area_fraction: float = 1.0,
-) -> Tuple[Scenario, forcing.ForcingResult]:
+) -> tuple[Scenario, forcing.ForcingResult]:
     """
     End-to-end helper: choose a surface class, perturb its albedo, and compute forcing.
 

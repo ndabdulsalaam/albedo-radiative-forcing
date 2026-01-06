@@ -6,8 +6,9 @@ conditions and are intended for quick energy-balance experiments. Values
 are drawn from literature ranges; see inline comments for sources.
 """
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Dict, Iterable, Literal
+from typing import Literal
 
 Anchor = Literal["typical", "min", "max"]
 
@@ -29,7 +30,7 @@ class SurfaceAlbedo:
 # - Snow, aging/dusty: 0.40-0.60, mid ~0.50 (Wiscombe & Warren, 1980).
 # - Urban/built: 0.12-0.20, mid ~0.16 (Taha, 1997; Oke, 1987).
 # - Cropland/bare soil: 0.15-0.25, mid ~0.20 (Sellers, 1965).
-SURFACE_LIBRARY: Dict[str, SurfaceAlbedo] = {
+SURFACE_LIBRARY: dict[str, SurfaceAlbedo] = {
     "vegetation": SurfaceAlbedo(typical=0.17, range_min=0.13, range_max=0.20, note="closed canopy forest/grass"),
     "desert": SurfaceAlbedo(typical=0.38, range_min=0.30, range_max=0.45, note="bright sand"),
     "snow_fresh": SurfaceAlbedo(typical=0.78, range_min=0.70, range_max=0.85, note="fresh dry snow"),

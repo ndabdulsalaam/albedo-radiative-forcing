@@ -18,7 +18,6 @@ sanity check against first-order energy balance expectations.
 """
 
 from dataclasses import dataclass
-from typing import Tuple
 
 from . import forcing as forcing_mod
 
@@ -31,7 +30,7 @@ BENCHMARK_SENSITIVITY_W_M2_PER_DELTA_ALPHA = -340.0
 class ValidationResult:
     """Outcome of forcing validation."""
 
-    expected_range_w_m2: Tuple[float, float]
+    expected_range_w_m2: tuple[float, float]
     modeled_w_m2: float
     within_range: bool
     notes: str
@@ -49,7 +48,7 @@ def expected_forcing_range(
     area_fraction: float = 1.0,
     *,
     tolerance_fraction: float = 0.2,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Compute an expected forcing interval based on IPCC-style shortwave sensitivity.
 

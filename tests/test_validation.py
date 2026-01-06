@@ -8,15 +8,18 @@ Tests validation against IPCC benchmarks including:
 - Validation logic
 """
 
+import dataclasses
+
 import pytest
+
+from src.forcing import ForcingResult, delta_radiative_forcing
 from src.validation import (
     BENCHMARK_SENSITIVITY_W_M2_PER_DELTA_ALPHA,
     ValidationResult,
-    validate_area_fraction,
     expected_forcing_range,
+    validate_area_fraction,
     validate_forcing_result,
 )
-from src.forcing import delta_radiative_forcing, ForcingResult
 
 
 class TestBenchmarkConstant:
@@ -33,10 +36,7 @@ class TestValidationResult:
     def test_validation_result_creation(self) -> None:
         """Test creation of ValidationResult"""
         result = ValidationResult(
-            expected_range_w_m2=(-4.0, -3.0),
-            modeled_w_m2=-3.5,
-            within_range=True,
-            notes="Test note"
+            expected_range_w_m2=(-4.0, -3.0), modeled_w_m2=-3.5, within_range=True, notes="Test note"
         )
         assert result.expected_range_w_m2 == (-4.0, -3.0)
         assert result.modeled_w_m2 == -3.5
@@ -46,7 +46,7 @@ class TestValidationResult:
     def test_validation_result_immutable(self) -> None:
         """Test that ValidationResult is frozen"""
         result = ValidationResult((-4.0, -3.0), -3.5, True, "note")
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(dataclasses.FrozenInstanceError):
             result.within_range = False  # type: ignore
 
 
@@ -96,7 +96,7 @@ class TestExpectedForcingRange:
         """Test that area fraction scales the range"""
         full_low, full_high = expected_forcing_range(0.01, area_fraction=1.0)
         half_low, half_high = expected_forcing_range(0.01, area_fraction=0.5)
-        
+
         assert abs(half_low - full_low / 2) < 0.1
         assert abs(half_high - full_high / 2) < 0.1
 
@@ -104,7 +104,7 @@ class TestExpectedForcingRange:
         """Test that tolerance fraction widens the range"""
         narrow_low, narrow_high = expected_forcing_range(0.01, tolerance_fraction=0.1)
         wide_low, wide_high = expected_forcing_range(0.01, tolerance_fraction=0.3)
-        
+
         # Wider tolerance should give wider range
         assert wide_low < narrow_low
         assert wide_high > narrow_high
@@ -131,7 +131,7 @@ class TestValidateForcingResult:
         # Create a forcing result that should be valid
         forcing_result = delta_radiative_forcing(0.01, area_fraction=1.0)
         validation = validate_forcing_result(forcing_result)
-        
+
         assert isinstance(validation, ValidationResult)
         assert validation.within_range is True
         assert "Within expected range" in validation.notes
@@ -140,14 +140,14 @@ class TestValidateForcingResult:
         """Test that validation contains the modeled value"""
         forcing_result = delta_radiative_forcing(0.01, area_fraction=1.0)
         validation = validate_forcing_result(forcing_result)
-        
+
         assert validation.modeled_w_m2 == forcing_result.radiative_forcing_w_m2
 
     def test_validation_range_reasonable(self) -> None:
         """Test that expected range is reasonable"""
         forcing_result = delta_radiative_forcing(0.01, area_fraction=1.0)
         validation = validate_forcing_result(forcing_result)
-        
+
         low, high = validation.expected_range_w_m2
         assert low < high
         assert low < validation.modeled_w_m2 < high
@@ -155,13 +155,13 @@ class TestValidateForcingResult:
     def test_custom_tolerance(self) -> None:
         """Test validation with custom tolerance"""
         forcing_result = delta_radiative_forcing(0.01, area_fraction=1.0)
-        
+
         narrow = validate_forcing_result(forcing_result, tolerance_fraction=0.05)
         wide = validate_forcing_result(forcing_result, tolerance_fraction=0.5)
-        
+
         narrow_low, narrow_high = narrow.expected_range_w_m2
         wide_low, wide_high = wide.expected_range_w_m2
-        
+
         # Wider tolerance gives wider range
         assert wide_low < narrow_low
         assert wide_high > narrow_high
@@ -171,7 +171,7 @@ class TestValidateForcingResult:
         # Half globe
         forcing_result = delta_radiative_forcing(0.01, area_fraction=0.5)
         validation = validate_forcing_result(forcing_result)
-        
+
         # Should still be within range (scaled appropriately)
         assert validation.within_range is True
 
@@ -185,11 +185,7 @@ class TestValidateForcingResult:
         """Test that extremely unrealistic values might fail validation"""
         # Create an artificial ForcingResult with unrealistic forcing
         # For delta=0.01, expected is ~-3.4, so 100 W/m^2 should fail
-        bad_result = ForcingResult(
-            delta_albedo=0.01,
-            area_fraction=1.0,
-            radiative_forcing_w_m2=100.0  # Unrealistic
-        )
+        bad_result = ForcingResult(delta_albedo=0.01, area_fraction=1.0, radiative_forcing_w_m2=100.0)  # Unrealistic
         validation = validate_forcing_result(bad_result, tolerance_fraction=0.2)
         assert validation.within_range is False
         assert "Outside expected range" in validation.notes
@@ -201,7 +197,7 @@ class TestIntegrationWithForcing:
     def test_typical_scenario_validates(self) -> None:
         """Test that typical scenarios pass validation"""
         deltas = [-0.05, -0.02, -0.01, 0.01, 0.02, 0.05]
-        
+
         for delta in deltas:
             forcing_result = delta_radiative_forcing(delta, area_fraction=0.5)
             validation = validate_forcing_result(forcing_result)
@@ -210,7 +206,7 @@ class TestIntegrationWithForcing:
     def test_validation_across_area_fractions(self) -> None:
         """Test validation works for different area fractions"""
         area_fractions = [0.1, 0.25, 0.5, 0.75, 1.0]
-        
+
         for area in area_fractions:
             forcing_result = delta_radiative_forcing(0.01, area_fraction=area)
             validation = validate_forcing_result(forcing_result)
@@ -220,7 +216,7 @@ class TestIntegrationWithForcing:
         """Test that our model matches IPCC benchmark closely"""
         # For unit albedo change, should get ~-340 W/m^2
         forcing_result = delta_radiative_forcing(1.0, area_fraction=1.0)
-        
+
         # Check it's close to benchmark
         expected = BENCHMARK_SENSITIVITY_W_M2_PER_DELTA_ALPHA
         assert abs(forcing_result.radiative_forcing_w_m2 - expected) < 10.0

@@ -8,14 +8,17 @@ Tests radiative forcing calculations including:
 - Albedo difference calculations
 """
 
+import dataclasses
+
 import pytest
+
 from src.forcing import (
-    SOLAR_CONSTANT_W_M2,
     GEOMETRIC_FACTOR,
+    SOLAR_CONSTANT_W_M2,
     ForcingResult,
-    validate_delta_albedo,
-    delta_radiative_forcing,
     albedo_difference,
+    delta_radiative_forcing,
+    validate_delta_albedo,
 )
 
 
@@ -36,11 +39,7 @@ class TestForcingResult:
 
     def test_forcing_result_creation(self) -> None:
         """Test creation of ForcingResult"""
-        result = ForcingResult(
-            delta_albedo=0.01,
-            area_fraction=0.5,
-            radiative_forcing_w_m2=-1.7
-        )
+        result = ForcingResult(delta_albedo=0.01, area_fraction=0.5, radiative_forcing_w_m2=-1.7)
         assert result.delta_albedo == 0.01
         assert result.area_fraction == 0.5
         assert result.radiative_forcing_w_m2 == -1.7
@@ -48,7 +47,7 @@ class TestForcingResult:
     def test_forcing_result_immutable(self) -> None:
         """Test that ForcingResult is frozen"""
         result = ForcingResult(0.01, 0.5, -1.7)
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(dataclasses.FrozenInstanceError):
             result.delta_albedo = 0.02  # type: ignore
 
 
@@ -123,22 +122,14 @@ class TestDeltaRadiativeForcing:
     def test_custom_solar_constant(self) -> None:
         """Test with custom solar constant"""
         custom_s0 = 1400.0
-        result = delta_radiative_forcing(
-            0.01,
-            solar_constant=custom_s0,
-            area_fraction=1.0
-        )
+        result = delta_radiative_forcing(0.01, solar_constant=custom_s0, area_fraction=1.0)
         expected = -custom_s0 * GEOMETRIC_FACTOR * 0.01
         assert abs(result.radiative_forcing_w_m2 - expected) < 0.01
 
     def test_custom_geometric_factor(self) -> None:
         """Test with custom geometric factor"""
         custom_geom = 0.3
-        result = delta_radiative_forcing(
-            0.01,
-            geometric_factor=custom_geom,
-            area_fraction=1.0
-        )
+        result = delta_radiative_forcing(0.01, geometric_factor=custom_geom, area_fraction=1.0)
         expected = -SOLAR_CONSTANT_W_M2 * custom_geom * 0.01
         assert abs(result.radiative_forcing_w_m2 - expected) < 0.01
 
@@ -211,7 +202,7 @@ class TestIntegration:
         final = 0.28  # Darkening by 0.02
         delta = albedo_difference(initial, final)
         result = delta_radiative_forcing(delta, area_fraction=0.5)
-        
+
         # Darkening should give positive forcing (warming)
         assert result.radiative_forcing_w_m2 > 0
         # Should be approximately half of full-globe value
